@@ -1,5 +1,5 @@
 ---
-- name: Install Home Assistant Core on Linux with Docker
+- name: Install Home Assistant Core on Linux
   hosts: 192.168.204.97
   become: yes
 
@@ -9,66 +9,6 @@
         update_cache: yes
         upgrade: dist
         cache_valid_time: 3600
-
-    - name: Install prerequisites for Docker
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - software-properties-common
-        state: present
-
-    - name: Add Docker GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-
-    - name: Add Docker APT repository
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
-        state: present
-
-    - name: Update APT cache after adding Docker repo
-      apt:
-        update_cache: yes
-
-    - name: Install Docker
-      apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-        state: present
-
-    - name: Add user to Docker group
-      user:
-        name: "{{ ansible_user_id }}"
-        groups: docker
-        append: yes
-
-    - name: Enable and start Docker service
-      systemd:
-        name: docker
-        enabled: yes
-        state: started
-
-    - name: Install Docker Compose (optional)
-      get_url:
-        url: https://github.com/docker/compose/releases/download/v2.3.3/docker-compose-`uname -s`-`uname -m`
-        dest: /usr/local/bin/docker-compose
-        mode: '0755'
-
-    - name: Verify Docker installation
-      command: docker --version
-      register: docker_version
-
-    - debug:
-        msg: "Docker installed: {{ docker_version.stdout }}"
-
-    - name: Add the deadsnakes PPA repository
-      apt_repository:
-        repo: ppa:deadsnakes/ppa
 
     - name: Install Python 3.12 and dependencies
       apt:
