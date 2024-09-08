@@ -1,0 +1,77 @@
+---
+- name: Install Home Assistant Core on Linux
+  hosts: 192.168.204.97
+  become: yes
+
+  tasks:
+    - name: Update and upgrade system packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Add the deadsnakes PPA repository
+      apt_repository:
+        repo: ppa:deadsnakes/ppa
+
+    - name: Install Python 3.12 and dependencies
+      apt:
+        name:
+          - python3.12
+          - python3.12-dev
+          - python3.12-venv
+        state: present
+
+    - name: Install Home Assistant Core dependencies
+      apt:
+        name:
+          - bluez
+          - libffi-dev
+          - libtiff5
+          - libssl-dev
+          - libjpeg-dev
+          - zlib1g-dev
+          - autoconf
+          - build-essential
+          - libopenjp2-7
+          - libturbojpeg0-dev
+          - tzdata
+          - ffmpeg
+          - liblapack3
+          - liblapack-dev
+          - libatlas-base-dev
+        state: present
+
+    - name: Reboot after installing dependencies
+      reboot:
+
+    - name: Create Home Assistant user
+      user:
+        name: homeassistant
+        shell: /bin/bash
+        remove: no
+        groups: dialout
+        create_home: yes
+
+    - name: Create Home Assistant data directory
+      file:
+        path: /srv/homeassistant
+        owner: homeassistant
+        group: homeassistant
+        state: directory
+
+    - name: Switch to Home Assistant user and set up Python virtual environment
+      command: |
+        sudo -u homeassistant -H -s bash -c "
+        cd /srv/homeassistant &&
+        python3.12 -m venv . &&
+        source bin/activate &&
+        python3.12 -m pip install wheel &&
+        pip3.12 install homeassistant"
+      changed_when: false
+
+    - name: Start Home Assistant instance
+      shell: |
+        sudo -u homeassistant -H -s bash -c 'source /srv/homeassistant/bin/activate && nohup hass > /dev/null 2>&1 &'
+      become: true
+
